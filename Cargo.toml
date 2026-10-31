@@ -1,0 +1,11 @@
+[package]
+name = "space_travel"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+# Default features build raylib's full C library (needed so the crate's internal Drop impls for
+# things like Model/Material link correctly), but our own code never calls raylib's 3D
+# drawing/model/camera functions (disallowed by the course rules) — only window/input/texture
+# presentation. SUPPORT_IMAGE_GENERATION adds the one extra Rust-level API we need (gen_image_color).
+raylib = { version = "6.0.0", features = ["SUPPORT_IMAGE_GENERATION"] }
