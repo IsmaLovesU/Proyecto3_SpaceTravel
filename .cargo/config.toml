@@ -1,0 +1,14 @@
+# Needed so `raylib-sys`'s build script (which uses `bindgen`/libclang to generate Rust bindings
+# for raylib.h) can find the MinGW C standard library headers and libclang.dll. Without these,
+# the build fails with "fatal error: 'stdbool.h' file not found".
+#
+# `force = true` makes these win over whatever is (or isn't, or is stale/wrong) in the shell's own
+# environment, so the build works the same regardless of which terminal/session you run it from.
+#
+# These paths are specific to THIS machine's MinGW (WinLibs) and LLVM install locations. If you're
+# setting this up on a different machine, update them to match where your MinGW-w64 and LLVM are
+# installed (see README.md "Requisitos"). Use forward slashes even on Windows -- backslashes in an
+# env var value can get mangled by bindgen's shell-style argument parsing.
+[env]
+LIBCLANG_PATH = { value = "C:/Program Files/LLVM/bin", force = true }
+BINDGEN_EXTRA_CLANG_ARGS = { value = "-IC:/Users/andes/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/lib/gcc/x86_64-w64-mingw32/16.2.0/include -IC:/Users/andes/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/lib/gcc/x86_64-w64-mingw32/16.2.0/include-fixed -IC:/Users/andes/AppData/Local/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/x86_64-w64-mingw32/include", force = true }

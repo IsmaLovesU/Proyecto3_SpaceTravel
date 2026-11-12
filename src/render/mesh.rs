@@ -1,18 +1,29 @@
 use crate::math::{Vec2, Vec3};
+use raylib::color::Color;
 use std::collections::HashMap;
 
-/// Plain triangle mesh: positions/normals/uvs are parallel arrays, `indices` are triangle triplets.
+/// Plain triangle mesh: positions/normals/uvs/colors are parallel arrays, `indices` are triangle
+/// triplets. Per-vertex color lets a single mesh carry multiple flat colors (e.g. a mushroom prop
+/// with a red cap and a white stem) without extra draw calls.
 #[derive(Debug, Clone, Default)]
 pub struct Mesh {
     pub positions: Vec<Vec3>,
     pub normals: Vec<Vec3>,
     pub uvs: Vec<Vec2>,
+    pub colors: Vec<Color>,
     pub indices: Vec<u32>,
 }
 
 impl Mesh {
     pub fn triangle_count(&self) -> usize {
         self.indices.len() / 3
+    }
+
+    /// Fills `colors` with a single flat color for every vertex (used by meshes that don't need
+    /// per-part coloring: the sun, planets, the ship).
+    pub fn tint(mut self, color: Color) -> Mesh {
+        self.colors = vec![color; self.positions.len()];
+        self
     }
 }
 
@@ -83,11 +94,30 @@ pub fn icosphere(subdivisions: u32) -> Mesh {
         })
         .collect();
 
-    Mesh { positions, normals, uvs, indices }
+    Mesh { positions, normals, uvs, colors: Vec::new(), indices }
 }
 
 /// Precomputes a set of icospheres at increasing subdivision levels, from coarsest (index 0) to
 /// finest (index `levels - 1`), used for distance-based level of detail.
 pub fn icosphere_lod_levels(levels: u32) -> Vec<Mesh> {
     (0..levels).map(icosphere).collect()
+}
+
+/// Recomputes smooth per-vertex normals from scratch: accumulates each triangle's face normal
+/// into its three vertices, then normalizes. Shared by noise deformation (after displacing
+/// vertices) and mesh subdivision (after Laplacian smoothing) — both need normals recomputed from
+/// new positions, independent of whatever normals the mesh had before.
+pub fn recompute_smooth_normals(positions: &[Vec3], indices: &[u32]) -> Vec<Vec3> {
+    let mut normals = vec![Vec3::ZERO; positions.len()];
+    for tri in indices.chunks_exact(3) {
+        let (a, b, c) = (tri[0] as usize, tri[1] as usize, tri[2] as usize);
+        let face_normal = (positions[b] - positions[a]).cross(positions[c] - positions[a]);
+        normals[a] += face_normal;
+        normals[b] += face_normal;
+        normals[c] += face_normal;
+    }
+    for n in &mut normals {
+        *n = n.normalized();
+    }
+    normals
 }

@@ -42,6 +42,10 @@ fn main() {
         solar_system.sim_time += dt as f64;
         solar_system.update_bodies();
 
+        if rl.is_key_pressed(KeyboardKey::KEY_R) {
+            solar_system.regenerate_surfaces(solar_system.surface_seed.wrapping_add(1));
+        }
+
         // Built from the individual fields (not `solar_system.bodies()`) so the borrow checker
         // sees it as disjoint from the `&mut solar_system.ship` borrows right below.
         let body_refs: Vec<&CelestialBody> =
@@ -83,12 +87,38 @@ fn main() {
                 body.rotation,
                 &view_proj,
                 camera.position,
-                body.color,
                 body.shader.as_ref(),
                 light_dir,
                 solar_system.sim_time,
                 &mut stats,
             );
+
+            // Surface props only matter once the camera is close enough to actually see them
+            // (finest LOD tier) -- otherwise they're imperceptible and not worth the triangles.
+            let is_closest_lod = lod_idx == body.mesh_lods.len() - 1;
+            if is_closest_lod && !body.prop_meshes.is_empty() {
+                stats.instances_total += body.surface_instances.len() as u32;
+                for inst in &body.surface_instances {
+                    let world_pos = body.instance_world_pos(inst);
+                    let bounding_radius = body.radius * inst.scale * 0.4;
+                    if !frustum::sphere_in_frustum(&planes, world_pos, bounding_radius) {
+                        stats.instances_culled += 1;
+                        continue;
+                    }
+                    pipeline::draw_mesh(
+                        &mut framebuffer,
+                        &body.prop_meshes[inst.prop_type],
+                        &body.instance_model_matrix(inst),
+                        body.instance_rotation(inst),
+                        &view_proj,
+                        camera.position,
+                        body.shader.as_ref(),
+                        light_dir,
+                        solar_system.sim_time,
+                        &mut stats,
+                    );
+                }
+            }
         }
 
         let ship_light_dir = (solar_system.ship.position - sun_pos).normalized();
@@ -99,7 +129,6 @@ fn main() {
             solar_system.ship.orientation,
             &view_proj,
             camera.position,
-            Color::new(205, 205, 215, 255),
             &ship_shader,
             ship_light_dir,
             solar_system.sim_time,
@@ -121,19 +150,23 @@ fn main() {
         );
 
         let hud = format!(
-            "FPS: {}\nVelocidad: {:.1}\nModo local: {}\nCuerpos: {}/{} visibles\nTriangulos: {} enviados | {} back-face | {} rasterizados",
+            "FPS: {}\nVelocidad: {:.1}\nCerca de: {} (modo local: {})\nCuerpos: {}/{} visibles | Props: {}/{} visibles\nTriangulos: {} enviados | {} back-face | {} rasterizados\nSemilla superficie: {} (R para regenerar)",
             fps,
             ctrl_out.speed,
+            ctrl_out.nearest_body_name.as_deref().unwrap_or("-"),
             if ctrl_out.local_mode { "SI" } else { "no" },
             stats.bodies_total - stats.bodies_culled,
             stats.bodies_total,
+            stats.instances_total - stats.instances_culled,
+            stats.instances_total,
             stats.triangles_submitted,
             stats.triangles_backface_culled,
             stats.triangles_rasterized,
+            solar_system.surface_seed,
         );
         d.draw_text(&hud, 16, 16, 20, Color::LIME);
         d.draw_text(
-            "WASD mover | Mouse mirar | A/D roll | Shift boost | Space frenar",
+            "WASD mover | Mouse mirar | A/D roll | Shift boost | Space frenar | R nueva semilla",
             16,
             WINDOW_H - 28,
             18,

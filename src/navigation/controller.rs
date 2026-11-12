@@ -32,10 +32,11 @@ impl Default for ControllerConfig {
     }
 }
 
-#[derive(Default, Clone, Copy)]
+#[derive(Default, Clone)]
 pub struct ControllerOutput {
     pub local_mode: bool,
     pub nearest_surface_distance: f32,
+    pub nearest_body_name: Option<String>,
     pub speed: f32,
 }
 
@@ -46,10 +47,15 @@ pub fn update_ship(
     cfg: &ControllerConfig,
     dt: f32,
 ) -> ControllerOutput {
-    let nearest_surface_distance = bodies
-        .iter()
-        .map(|b| ship.position.distance(b.position) - b.radius)
-        .fold(f32::INFINITY, f32::min);
+    let mut nearest_surface_distance = f32::INFINITY;
+    let mut nearest_body_name: Option<String> = None;
+    for b in bodies {
+        let d = ship.position.distance(b.position) - b.radius;
+        if d < nearest_surface_distance {
+            nearest_surface_distance = d;
+            nearest_body_name = Some(b.name.clone());
+        }
+    }
     let local_mode = nearest_surface_distance < cfg.local_mode_distance;
 
     // --- Orientation: full local-space rotation (6DOF), avoids gimbal lock via quaternions ---
@@ -97,5 +103,5 @@ pub fn update_ship(
 
     ship.position += ship.velocity * dt;
 
-    ControllerOutput { local_mode, nearest_surface_distance, speed: ship.velocity.length() }
+    ControllerOutput { local_mode, nearest_surface_distance, nearest_body_name, speed: ship.velocity.length() }
 }

@@ -60,6 +60,25 @@ impl Quat {
         }
     }
 
+    /// Shortest-arc rotation that takes the unit vector `from` to the unit vector `to`. Used to
+    /// align a surface prop's local "up" with the normal of the sphere it's placed on.
+    pub fn from_to_rotation(from: Vec3, to: Vec3) -> Quat {
+        let d = from.dot(to).clamp(-1.0, 1.0);
+        if d > 0.999999 {
+            return Quat::IDENTITY;
+        }
+        if d < -0.999999 {
+            // Opposite vectors: pick any axis perpendicular to `from`.
+            let mut axis = Vec3::RIGHT.cross(from);
+            if axis.length_squared() < 1e-6 {
+                axis = Vec3::UP.cross(from);
+            }
+            return Quat::from_axis_angle(axis.normalized(), std::f32::consts::PI);
+        }
+        let axis = from.cross(to).normalized();
+        Quat::from_axis_angle(axis, d.acos())
+    }
+
     pub fn slerp(self, rhs: Quat, t: f32) -> Quat {
         let mut b = rhs;
         let mut dot = self.x * b.x + self.y * b.y + self.z * b.z + self.w * b.w;

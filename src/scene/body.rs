@@ -1,7 +1,7 @@
+use super::distribution::SurfaceInstance;
 use crate::math::{Mat4, Quat, Vec3};
 use crate::render::mesh::Mesh;
 use crate::render::shader::FragmentShader;
-use raylib::color::Color;
 
 /// None for the sun (fixed at the origin).
 pub struct OrbitParams {
@@ -19,11 +19,17 @@ pub struct CelestialBody {
     pub radius: f32,
     /// Used only for the gravity model; independent from the visual radius so it can be tuned.
     pub mass: f32,
-    pub color: Color,
     pub orbit: Option<OrbitParams>,
     /// Self-rotation angular speed in radians/second (about the local Y axis).
     pub spin_speed: f64,
     pub shader: Box<dyn FragmentShader>,
+
+    /// The planet's up-to-4 exclusive surface model types (empty for the sun / un-themed bodies).
+    pub prop_meshes: Vec<Mesh>,
+    /// Where each surface-model instance sits, in local unit-sphere space (see
+    /// `distribution::SurfaceInstance`). Regenerated in place by `regenerate_surface` when the
+    /// placement seed changes.
+    pub surface_instances: Vec<SurfaceInstance>,
 
     pub position: Vec3,
     pub rotation: Quat,
@@ -41,6 +47,26 @@ impl CelestialBody {
 
     pub fn model_matrix(&self) -> Mat4 {
         Mat4::translation(self.position) * self.rotation.to_mat4() * Mat4::scaling(self.radius)
+    }
+
+    /// World-space model matrix for one surface instance. Composing onto `model_matrix()` (which
+    /// already carries the planet's position/rotation/radius) is what makes the instance orbit,
+    /// spin and sit at the right scale automatically, with no extra per-frame recomputation.
+    pub fn instance_model_matrix(&self, inst: &SurfaceInstance) -> Mat4 {
+        self.model_matrix()
+            * Mat4::translation(inst.local_pos)
+            * inst.local_rotation.to_mat4()
+            * Mat4::scaling(inst.scale)
+    }
+
+    /// Combined rotation (planet spin + instance alignment/yaw), for correct normal transforms.
+    pub fn instance_rotation(&self, inst: &SurfaceInstance) -> Quat {
+        self.rotation * inst.local_rotation
+    }
+
+    /// Approximate world-space position of an instance, for per-instance frustum culling.
+    pub fn instance_world_pos(&self, inst: &SurfaceInstance) -> Vec3 {
+        self.model_matrix().mul_point(inst.local_pos)
     }
 
     /// LOD distance thresholds scale with the body's own radius, so a small and a huge placeholder

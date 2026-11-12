@@ -1,5 +1,6 @@
 use super::mesh::Mesh;
 use crate::math::{Vec2, Vec3};
+use raylib::color::Color;
 use std::collections::HashMap;
 use std::fs;
 use std::io;
@@ -98,7 +99,8 @@ pub fn load_obj(path: &str) -> io::Result<Mesh> {
         }
     }
 
-    Ok(Mesh { positions, normals, uvs, indices })
+    let vertex_count = positions.len();
+    Ok(Mesh { positions, normals, uvs, colors: vec![Color::new(205, 205, 215, 255); vertex_count], indices })
 }
 
 fn parse_corner(token: &str) -> Corner {

@@ -53,5 +53,12 @@ pub fn placeholder_wedge_mesh() -> Mesh {
             indices.push((out_positions.len() - 1) as u32);
         }
     }
-    Mesh { positions: out_positions, normals: out_normals, uvs: out_uvs, indices }
+    let n = out_positions.len();
+    Mesh {
+        positions: out_positions,
+        normals: out_normals,
+        uvs: out_uvs,
+        colors: vec![raylib::color::Color::new(205, 205, 215, 255); n],
+        indices,
+    }
 }

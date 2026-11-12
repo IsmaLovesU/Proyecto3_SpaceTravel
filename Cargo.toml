@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+rand = "0.10.3"
 # Default features build raylib's full C library (needed so the crate's internal Drop impls for
 # things like Model/Material link correctly), but our own code never calls raylib's 3D
 # drawing/model/camera functions (disallowed by the course rules) — only window/input/texture

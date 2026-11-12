@@ -1,4 +1,6 @@
 pub mod body;
+pub mod distribution;
+pub mod props;
 pub mod ship;
 pub mod solar_system;
 

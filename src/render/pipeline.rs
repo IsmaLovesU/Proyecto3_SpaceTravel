@@ -3,7 +3,6 @@ use super::mesh::Mesh;
 use super::shader::{FragmentShader, ShadingContext};
 use crate::math::{Mat4, Quat, Vec3, Vec4};
 use crate::perf::stats::FrameStats;
-use raylib::color::Color;
 
 #[inline]
 fn edge(a: (f32, f32), b: (f32, f32), p: (f32, f32)) -> f32 {
@@ -22,7 +21,6 @@ pub fn draw_mesh(
     rotation: Quat,
     view_proj: &Mat4,
     camera_pos: Vec3,
-    base_color: Color,
     shader: &dyn FragmentShader,
     light_dir: Vec3,
     time: f64,
@@ -82,6 +80,9 @@ pub fn draw_mesh(
         let uv0 = mesh.uvs[i0];
         let uv1 = mesh.uvs[i1];
         let uv2 = mesh.uvs[i2];
+        let col0 = mesh.colors[i0];
+        let col1 = mesh.colors[i1];
+        let col2 = mesh.colors[i2];
 
         stats.triangles_rasterized += 1;
 
@@ -117,6 +118,12 @@ pub fn draw_mesh(
                 )
                 .normalized();
                 let uv = crate::math::Vec2::new(persp(uv0.x, uv1.x, uv2.x), persp(uv0.y, uv1.y, uv2.y));
+                let base_color = raylib::color::Color::new(
+                    persp(col0.r as f32, col1.r as f32, col2.r as f32).clamp(0.0, 255.0) as u8,
+                    persp(col0.g as f32, col1.g as f32, col2.g as f32).clamp(0.0, 255.0) as u8,
+                    persp(col0.b as f32, col1.b as f32, col2.b as f32).clamp(0.0, 255.0) as u8,
+                    persp(col0.a as f32, col1.a as f32, col2.a as f32).clamp(0.0, 255.0) as u8,
+                );
 
                 let ctx = ShadingContext {
                     world_pos,
