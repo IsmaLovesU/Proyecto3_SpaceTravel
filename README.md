@@ -70,7 +70,9 @@ cálculo por píxel) — usar siempre `--release` para la demo.
 - Space: frenar (amortiguación progresiva).
 - R: regenera la semilla de distribución procedural de superficie (reproducible: misma semilla =
   mismas posiciones).
-- H: oculta/muestra el HUD (útil para el video).
+- H: oculta/muestra el HUD y las etiquetas de los planetas (útil para el video). Cada cuerpo
+  lleva una etiqueta 2D con su nombre y la distancia a su superficie, anclada sobre su borde
+  superior proyectado (se oculta si otro cuerpo lo tapa).
 - Acercarse a un planeta activa automáticamente el "modo local" (velocidad máxima reducida,
   con transición suave) para rodearlo de cerca. La gravedad curva la trayectoria cerca de los
   cuerpos; chocar con uno detiene la componente de velocidad hacia él.
@@ -85,7 +87,11 @@ halo aditivo en espacio de pantalla, ambos en `src/render/sky.rs`.
 ## Nave
 
 El modelo de la nave (`assets/models/ship.obj`, hecho en Blender) se carga con un parser de `.obj`
-propio (`src/render/obj_loader.rs`) — no se usa el cargador de modelos de raylib. Antes de
+propio (`src/render/obj_loader.rs`) — no se usa el cargador de modelos de raylib. El casco se
+repinta por vértice (casco claro, panza oscura, banda y punta naranja, zona de cabina azul) y se
+le añaden piezas procedurales con las mismas primitivas de los props: dos motores con núcleo
+brillante, cúpula de cabina, aleta dorsal con mástil, winglets, luces de navegación (roja/verde),
+faro de proa, tomas de aire y patines (`src/scene/ship_style.rs`). Antes de
 subdividirla se sueldan los vértices duplicados del `.obj` (`weld_vertices` en
 `src/render/subdivision.rs`) para que el suavizado no abra grietas. Si el archivo no está
 presente, se usa una cuña de respaldo generada en código para que el proyecto siga siendo

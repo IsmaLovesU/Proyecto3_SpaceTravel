@@ -36,7 +36,7 @@ fn main() {
 
     let controller_cfg = controller::ControllerConfig::default();
     let gravity_cfg = gravity::GravityConfig::default();
-    let ship_shader = LambertShader { ambient: 0.3 };
+    let ship_shader = LambertShader { ambient: 0.42 };
 
     // Chase-cam tuning (ship-local frame). Distance stretches with speed and the FOV opens up
     // while boosting, which is what sells acceleration in a static-camera game.
@@ -217,6 +217,51 @@ fn main() {
             0.0,
             Color::WHITE,
         );
+
+        // --- Planet name tags: 2D labels anchored just above each body's projected top ---
+        if show_hud {
+            for body in solar_system.bodies() {
+                // Skip bodies hidden behind another one (e.g. a planet on the far side of the sun).
+                let to_body = body.position - camera.position;
+                let body_dist = to_body.length();
+                let ray = to_body * (1.0 / body_dist.max(1e-3));
+                let occluded = solar_system.bodies().any(|other| {
+                    if std::ptr::eq(other, body) {
+                        return false;
+                    }
+                    let rel = other.position - camera.position;
+                    let t = rel.dot(ray);
+                    if t <= 0.0 || t >= body_dist {
+                        return false;
+                    }
+                    let perp = (rel - ray * t).length();
+                    perp < other.collision_radius()
+                });
+                if occluded {
+                    continue;
+                }
+                let anchor = body.position + camera.up() * (body.collision_radius() * 1.12);
+                let clip = view_proj.mul_vec4(math::Vec4::from_point(anchor));
+                if clip.w <= 0.0 {
+                    continue;
+                }
+                let nx = clip.x / clip.w;
+                let ny = clip.y / clip.w;
+                if nx < -1.05 || nx > 1.05 || ny < -1.05 || ny > 1.05 {
+                    continue;
+                }
+                let sx = ((nx * 0.5 + 0.5) * WINDOW_W as f32) as i32;
+                let sy = ((1.0 - (ny * 0.5 + 0.5)) * WINDOW_H as f32) as i32;
+                let dist = camera.position.distance(body.position) - body.collision_radius();
+                let label = format!("{}  {:.0} u", body.name, dist.max(0.0));
+                let font = if dist < 120.0 { 20 } else { 16 };
+                let tw = d.measure_text(&label, font);
+                let (tx, ty) = (sx - tw / 2, sy - font - 10);
+                d.draw_rectangle(tx - 6, ty - 3, tw + 12, font + 6, Color::new(0, 0, 0, 140));
+                d.draw_text(&label, tx, ty, font, Color::new(255, 240, 200, 255));
+                d.draw_line(sx, ty + font + 3, sx, sy, Color::new(255, 240, 200, 170));
+            }
+        }
 
         if show_hud {
             let nearest = ctrl_out.nearest_body_name.as_deref().unwrap_or("-");

@@ -2,6 +2,7 @@ use super::body::{CelestialBody, OrbitParams};
 use super::distribution::{scatter, ScatterSpec};
 use super::props;
 use super::ship::{self, Ship};
+use super::ship_style;
 use crate::math::{fbm, Quat, Vec3};
 use crate::render::deform::{deform_by_height, mictlan_terrain_height};
 use crate::render::mesh::{icosphere_lod_levels, Mesh};
@@ -86,9 +87,13 @@ impl SolarSystem {
                 ship::placeholder_wedge_mesh()
             }
         };
-        // Procedural subdivision + Laplacian smoothing pass, applied once here -- rounds off the
-        // loaded ship's low-poly silhouette before it's ever rasterized.
-        let ship_mesh = subdivide_mesh(&ship_mesh, 1, 0.5);
+        // Repaint the hull, then the procedural subdivision + Laplacian smoothing pass (rounds off
+        // the low-poly silhouette), then bolt on the procedural detail parts (engines, canopy,
+        // fins, lights) -- see `scene::ship_style`.
+        let mut ship_mesh = ship_mesh;
+        ship_style::paint_hull(&mut ship_mesh);
+        let mut ship_mesh = subdivide_mesh(&ship_mesh, 1, 0.5);
+        ship_style::add_details(&mut ship_mesh);
 
         let ship = Ship {
             // Start just outside the innermost orbit, looking in toward the sun, so the first
@@ -99,7 +104,7 @@ impl SolarSystem {
             angular_velocity: Vec3::ZERO,
             mesh: ship_mesh,
             mesh_scale: 1.0,
-            collision_radius: 1.6,
+            collision_radius: 2.4,
         };
 
         SolarSystem { sun, planets, ship, sim_time: 0.0, surface_seed: DEFAULT_SURFACE_SEED }

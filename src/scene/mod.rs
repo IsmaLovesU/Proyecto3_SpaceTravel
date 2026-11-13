@@ -2,6 +2,7 @@ pub mod body;
 pub mod distribution;
 pub mod props;
 pub mod ship;
+pub mod ship_style;
 pub mod solar_system;
 
 pub use body::CelestialBody;
