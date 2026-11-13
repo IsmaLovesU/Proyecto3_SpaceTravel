@@ -100,7 +100,7 @@ pub fn load_obj(path: &str) -> io::Result<Mesh> {
     }
 
     let vertex_count = positions.len();
-    Ok(Mesh { positions, normals, uvs, colors: vec![Color::new(205, 205, 215, 255); vertex_count], indices })
+    Ok(Mesh { positions, normals, uvs, colors: vec![Color::new(225, 228, 238, 255); vertex_count], indices })
 }
 
 fn parse_corner(token: &str) -> Corner {

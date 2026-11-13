@@ -1,10 +1,13 @@
-use crate::math::{Mat4, Quat, Vec3};
+use crate::math::{Quat, Vec3};
 use crate::render::mesh::Mesh;
 
 pub struct Ship {
     pub position: Vec3,
     pub orientation: Quat,
     pub velocity: Vec3,
+    /// Filtered pitch/yaw/roll rates (radians/second, ship-local axes). The controller steers
+    /// this instead of the orientation directly, which is what keeps turning smooth.
+    pub angular_velocity: Vec3,
     pub mesh: Mesh,
     pub mesh_scale: f32,
     /// Approximate bounding-sphere radius (world units, after `mesh_scale`) used for collisions.
@@ -16,16 +19,8 @@ impl Ship {
         self.orientation.rotate_vec3(Vec3::FORWARD)
     }
 
-    pub fn right(&self) -> Vec3 {
-        self.orientation.rotate_vec3(Vec3::RIGHT)
-    }
-
     pub fn up(&self) -> Vec3 {
         self.orientation.rotate_vec3(Vec3::UP)
-    }
-
-    pub fn model_matrix(&self) -> Mat4 {
-        Mat4::translation(self.position) * self.orientation.to_mat4() * Mat4::scaling(self.mesh_scale)
     }
 }
 

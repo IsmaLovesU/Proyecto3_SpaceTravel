@@ -10,11 +10,34 @@ use std::collections::HashMap;
 /// rasterizing it -- this is the "etapa propia de generación o subdivisión procedural de
 /// geometría" requirement, distinct from the noise-based planet deformation in `deform.rs`.
 pub fn subdivide_mesh(mesh: &Mesh, levels: u32, smoothing: f32) -> Mesh {
-    let mut current = mesh.clone();
+    let mut current = weld_vertices(mesh, 1e-4);
     for _ in 0..levels {
         current = subdivide_once(&current, smoothing);
     }
     current
+}
+
+/// Merges vertices that share (almost) the same position. Exported .obj files usually duplicate
+/// every vertex per face (flat shading), and smoothing those copies independently would tear the
+/// surface open along every edge -- welding first keeps the subdivided mesh watertight.
+fn weld_vertices(mesh: &Mesh, epsilon: f32) -> Mesh {
+    let inv = 1.0 / epsilon;
+    let mut lookup: HashMap<(i64, i64, i64), u32> = HashMap::new();
+    let mut remap = Vec::with_capacity(mesh.positions.len());
+    let mut out = Mesh::default();
+    for (i, p) in mesh.positions.iter().enumerate() {
+        let key = ((p.x * inv).round() as i64, (p.y * inv).round() as i64, (p.z * inv).round() as i64);
+        let idx = *lookup.entry(key).or_insert_with(|| {
+            out.positions.push(*p);
+            out.uvs.push(mesh.uvs[i]);
+            out.colors.push(mesh.colors[i]);
+            (out.positions.len() - 1) as u32
+        });
+        remap.push(idx);
+    }
+    out.indices = mesh.indices.iter().map(|&i| remap[i as usize]).collect();
+    out.normals = recompute_smooth_normals(&out.positions, &out.indices);
+    out
 }
 
 fn subdivide_once(mesh: &Mesh, smoothing: f32) -> Mesh {

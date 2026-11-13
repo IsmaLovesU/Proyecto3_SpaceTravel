@@ -14,19 +14,6 @@ pub struct Mesh {
     pub indices: Vec<u32>,
 }
 
-impl Mesh {
-    pub fn triangle_count(&self) -> usize {
-        self.indices.len() / 3
-    }
-
-    /// Fills `colors` with a single flat color for every vertex (used by meshes that don't need
-    /// per-part coloring: the sun, planets, the ship).
-    pub fn tint(mut self, color: Color) -> Mesh {
-        self.colors = vec![color; self.positions.len()];
-        self
-    }
-}
-
 /// Generates a unit icosphere (radius 1, centered at origin) with `subdivisions` recursive
 /// subdivision passes. Normals equal the normalized position (perfect sphere). UVs use a simple
 /// equirectangular (lon/lat) mapping.

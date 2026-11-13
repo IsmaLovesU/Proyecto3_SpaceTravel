@@ -7,6 +7,7 @@ pub mod obj_loader;
 pub mod pipeline;
 pub mod primitives;
 pub mod shader;
+pub mod sky;
 pub mod subdivision;
 
 pub use framebuffer::Framebuffer;

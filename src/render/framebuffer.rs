@@ -25,41 +25,12 @@ impl Framebuffer {
         self.depth.fill(1.0);
     }
 
-    #[inline]
-    fn index(&self, x: i32, y: i32) -> Option<usize> {
-        if x < 0 || y < 0 || x >= self.width || y >= self.height {
-            None
-        } else {
-            Some((y * self.width + x) as usize)
-        }
-    }
-
-    /// Standard depth test (closer wins, smaller NDC z), without writing. Lets the caller skip
-    /// shading work for pixels that would be discarded anyway.
-    #[inline]
-    pub fn depth_test(&self, x: i32, y: i32, depth: f32) -> bool {
-        match self.index(x, y) {
-            Some(i) => depth < self.depth[i],
-            None => false,
-        }
-    }
-
-    #[inline]
-    pub fn write_pixel(&mut self, x: i32, y: i32, depth: f32, color: Color) {
-        if let Some(i) = self.index(x, y) {
-            self.depth[i] = depth;
-            self.color[i] = color;
-        }
-    }
-
-    pub fn to_rgba_bytes(&self) -> Vec<u8> {
-        let mut bytes = Vec::with_capacity(self.color.len() * 4);
+    /// Packs the color buffer as RGBA8 into `out`, reusing its allocation frame to frame.
+    pub fn write_rgba_into(&self, out: &mut Vec<u8>) {
+        out.clear();
+        out.reserve(self.color.len() * 4);
         for c in &self.color {
-            bytes.push(c.r);
-            bytes.push(c.g);
-            bytes.push(c.b);
-            bytes.push(c.a);
+            out.extend_from_slice(&[c.r, c.g, c.b, c.a]);
         }
-        bytes
     }
 }

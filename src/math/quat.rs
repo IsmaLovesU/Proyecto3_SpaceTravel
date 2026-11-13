@@ -35,10 +35,6 @@ impl Quat {
         }
     }
 
-    pub fn conjugate(self) -> Quat {
-        Quat { x: -self.x, y: -self.y, z: -self.z, w: self.w }
-    }
-
     pub fn rotate_vec3(self, v: Vec3) -> Vec3 {
         let qv = Vec3::new(self.x, self.y, self.z);
         let t = qv.cross(v) * 2.0;

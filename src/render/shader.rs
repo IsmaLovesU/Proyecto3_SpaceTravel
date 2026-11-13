@@ -6,6 +6,9 @@ use raylib::color::Color;
 /// future per-planet shaders (atmosphere, crystal, lava, toon...) plug in without touching the
 /// rasterizer itself.
 pub struct ShadingContext {
+    /// Not read by the current shaders, but part of the stable shader interface (position-based
+    /// effects such as world-space noise plug in here without touching the rasterizer).
+    #[allow(dead_code)]
     pub world_pos: Vec3,
     pub normal: Vec3,
     pub uv: Vec2,
@@ -134,7 +137,7 @@ pub struct JadeCircuitShader {
 
 impl Default for JadeCircuitShader {
     fn default() -> Self {
-        JadeCircuitShader { ambient: 0.25, grid_frequency: 10.0, line_width: 0.035, glow_color: (40.0, 210.0, 170.0) }
+        JadeCircuitShader { ambient: 0.25, grid_frequency: 26.0, line_width: 0.03, glow_color: (40.0, 210.0, 170.0) }
     }
 }
 
@@ -166,8 +169,8 @@ impl Default for NeonGridShader {
     fn default() -> Self {
         NeonGridShader {
             ambient: 0.35,
-            grid_frequency: 14.0,
-            line_width: 0.05,
+            grid_frequency: 22.0,
+            line_width: 0.04,
             glow_color: (40.0, 160.0, 255.0),
             pulse_speed: 2.4,
         }

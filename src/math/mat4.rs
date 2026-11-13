@@ -66,16 +66,6 @@ impl Mat4 {
         }
     }
 
-    pub fn transpose(self) -> Mat4 {
-        let mut r = Mat4::IDENTITY;
-        for i in 0..4 {
-            for j in 0..4 {
-                r.m[i][j] = self.m[j][i];
-            }
-        }
-        r
-    }
-
     pub fn mul_vec4(self, v: Vec4) -> Vec4 {
         let a = [v.x, v.y, v.z, v.w];
         let mut out = [0.0f32; 4];
@@ -90,10 +80,6 @@ impl Mat4 {
         self.mul_vec4(Vec4::from_point(p)).xyz()
     }
 
-    /// Transforms a direction (implicit w = 0, ignores translation).
-    pub fn mul_dir(self, d: Vec3) -> Vec3 {
-        self.mul_vec4(Vec4::from_dir(d)).xyz()
-    }
 }
 
 impl Mul for Mat4 {

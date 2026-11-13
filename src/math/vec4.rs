@@ -18,19 +18,10 @@ impl Vec4 {
         Vec4::new(p.x, p.y, p.z, 1.0)
     }
 
-    pub fn from_dir(d: Vec3) -> Self {
-        Vec4::new(d.x, d.y, d.z, 0.0)
-    }
-
     pub fn xyz(self) -> Vec3 {
         Vec3::new(self.x, self.y, self.z)
     }
 
-    /// Perspective divide: returns NDC position (xyz / w).
-    pub fn perspective_divide(self) -> Vec3 {
-        let inv_w = 1.0 / self.w;
-        Vec3::new(self.x * inv_w, self.y * inv_w, self.z * inv_w)
-    }
 }
 
 impl Add for Vec4 {
